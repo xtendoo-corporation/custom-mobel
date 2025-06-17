@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú principal de Importaciones -->
+    <menuitem id="menu_mobel_imports_root"
+              name="Importaciones"
+              parent="contacts.menu_contacts"
+              sequence="20"/>
+
+    <!-- Submenú para importar clientes -->
+    <menuitem id="menu_import_customer"
+              name="Importar Clientes"
+              parent="menu_mobel_imports_root"
+              action="action_import_customer"
+              sequence="10"/>
+
+    <!-- Submenú para importar proveedores -->
+    <menuitem id="menu_import_supplier"
+              name="Importar Proveedores"
+              parent="menu_mobel_imports_root"
+              action="action_import_supplier"
+              sequence="20"/>
+</odoo>
