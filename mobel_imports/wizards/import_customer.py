@@ -86,8 +86,28 @@ class ImportCustomer(models.TransientModel):
             forma_pago = row[17] if len(row) > 17 else ''
             dias_pago = int(row[18]) if len(row) > 18 and row[18] and isinstance(row[18], (int, float)) else 0
             cuenta_bancaria = row[19] if len(row) > 19 else ''
-            cuenta_contable = row[20] if len(row) > 20 else ''
-            subcuenta = row[21] if len(row) > 21 else ''
+            cuenta_contable = ''
+            if len(row) > 20 and row[20]:
+                if isinstance(row[20], float):
+                    if row[20].is_integer():
+                        cuenta_contable = str(int(row[20]))  # Convertir a entero y luego a string
+                    else:
+                        cuenta_contable = str(row[20])  # Mantener como float en string
+                else:
+                    cuenta_contable = str(row[20])  # Asegurar que es string
+            else:
+                cuenta_contable = ''
+            subcuenta = ''
+            if len(row) > 21 and row[21]:
+                if isinstance(row[21], float):
+                    if row[21].is_integer():
+                        subcuenta = str(int(row[21]))  # Convertir a entero y luego a string
+                    else:
+                        subcuenta = str(row[21])  # Mantener como float en string
+                else:
+                    subcuenta = str(row[21])  # Asegurar que es string
+            else:
+                subcuenta = ''
             tipo_cliente = row[22] if len(row) > 22 else ''
 
             # Búsqueda de país y provincia
@@ -95,14 +115,6 @@ class ImportCustomer(models.TransientModel):
             if pais_codigo:
                 country = Country.search([('code', '=', pais_codigo)], limit=1)
                 country_id = country.id if country else False
-
-            if country_id:
-                states = State.search([('country_id', '=', country_id)])
-                print(f"[DEBUG] Provincias encontradas para el país ID {country_id}:")
-                for s in states:
-                    print(f" - ID: {s.id}, Código: {s.code}, Nombre: {s.name}")
-            else:
-                print("[DEBUG] No se pudo determinar el país, no se listarán provincias.")
 
             state_id = False
             if provincia_codigo and country_id:
@@ -236,3 +248,70 @@ class ImportCustomer(models.TransientModel):
                             })
                         except Exception as e:
                             print(f"[ERROR] No se pudo crear la cuenta bancaria: {str(e)}")
+
+            print(f"[DEBUG] Procesando cliente: {partner.name} (ID: {partner.id})")
+            print("Cuenta contable:", cuenta_contable, "Subcuenta:", subcuenta)
+            # Procesamiento de cuenta contable del cliente
+            if cuenta_contable and subcuenta:
+                # Normalizar cuenta_contable a 4 dígitos y subcuenta a 9 dígitos
+                cuenta_contable_norm = str(cuenta_contable).strip()
+                subcuenta_norm = str(subcuenta).strip()
+
+                # Verificar que sean valores numéricos
+                if cuenta_contable_norm.isdigit() and subcuenta_norm.isdigit():
+                    cuenta_contable_norm = cuenta_contable_norm[:4].zfill(4)
+                    subcuenta_norm = subcuenta_norm[:9].zfill(9)
+
+                    # Código completo de la cuenta contable
+                    codigo_cuenta = cuenta_contable_norm + subcuenta_norm
+
+                    print(f"[DEBUG] Procesando cuenta contable: {codigo_cuenta} para cliente {partner.name}")
+
+                    # Buscar si ya existe una cuenta con ese código
+                    AccountAccount = self.env['account.account']
+                    existing_account = AccountAccount.search([('code', '=', codigo_cuenta)], limit=1)
+
+                    if existing_account:
+                        print(
+                            f"[DEBUG] Cuenta contable ya existente: {existing_account.code} - {existing_account.name}")
+                        account_receivable_id = existing_account.id
+                    else:
+                        # Detectar versión de Odoo para usar los campos correctos
+                        has_account_type_field = 'account_type' in AccountAccount._fields
+
+                        # Crear valores de la cuenta según la versión de Odoo
+                        account_vals = {
+                            'code': codigo_cuenta,
+                            'name': f"Cuenta cliente {partner.name}",
+                            'reconcile': True,
+                            'account_type':'asset_receivable'
+                        }
+
+                        if 'account.group' in self.env:
+                            AccountGroup = self.env['account.group']
+                            account_group = AccountGroup.search([('code_prefix_start', '=', cuenta_contable_norm)], limit=1)
+
+                            if not account_group:
+                                print(f"[INFO] Creando grupo de cuenta {cuenta_contable_norm}")
+                                try:
+                                    account_group = AccountGroup.create({
+                                        'name': f"Grupo {cuenta_contable_norm}",
+                                        'code_prefix_start': cuenta_contable_norm,
+                                    })
+                                except Exception as e:
+                                    print(f"[ERROR] No se pudo crear el grupo de cuenta: {str(e)}")
+
+                            if account_group:
+                                account_vals['group_id'] = account_group.id
+
+                        # Crear la cuenta
+                        try:
+                            new_account = AccountAccount.create(account_vals)
+                            print(f"[DEBUG] Cuenta contable creada: {new_account.code} - {new_account.name}")
+                            account_receivable_id = new_account.id
+
+                            # Asignar la cuenta contable al cliente
+                            partner.write({'property_account_receivable_id': account_receivable_id})
+                            print(f"[DEBUG] Cuenta contable asignada al cliente: {partner.name}")
+                        except Exception as e:
+                            print(f"[ERROR] No se pudo crear la cuenta contable: {str(e)}")
