@@ -214,6 +214,8 @@ class ImportSupplier(models.TransientModel):
                 'is_company': True,
                 'supplier_rank': 1,  # Es proveedor
                 'property_account_position_id': account_position_id,
+                'invoice_edi_format':False,
+                'company_id': self.env.company.id,
             }
 
             # Buscar proveedor existente por NIF o código
@@ -286,66 +288,87 @@ class ImportSupplier(models.TransientModel):
             print("Cuenta contable:", cuenta_contable, "Subcuenta:", subcuenta)
             # Procesamiento de cuenta contable del cliente
             if cuenta_contable and subcuenta:
-                # Normalizar cuenta_contable a 4 dígitos y subcuenta a 9 dígitos
-                cuenta_contable_norm = str(cuenta_contable).strip()
-                subcuenta_norm = str(subcuenta).strip()
+                codigo_cuenta = '430000'
+                AccountAccount = self.env['account.account']
+                existing_account = AccountAccount.search([('code', '=', codigo_cuenta)], limit=1)
 
-                # Verificar que sean valores numéricos
-                if cuenta_contable_norm.isdigit() and subcuenta_norm.isdigit():
-                    cuenta_contable_norm = cuenta_contable_norm[:4].zfill(4)
-                    subcuenta_norm = subcuenta_norm[:9].zfill(9)
+                if existing_account:
+                    account_receivable_id = existing_account.id
+                    print(f"[DEBUG] Cuenta contable ya existente: {existing_account.code} - {existing_account.name}")
+                else:
+                    account_vals = {
+                        'code': codigo_cuenta,
+                        'name': f"Cuenta cliente {partner.name}",
+                        'reconcile': True,
+                        'account_type': 'asset_receivable'
+                    }
+                    new_account = AccountAccount.create(account_vals)
+                    account_receivable_id = new_account.id
+                    print(f"[DEBUG] Cuenta contable creada: {new_account.code} - {new_account.name}")
 
-                    # Código completo de la cuenta contable
-                    codigo_cuenta = cuenta_contable_norm + subcuenta_norm
-
-                    print(f"[DEBUG] Procesando cuenta contable: {codigo_cuenta} para cliente {partner.name}")
-
-                    # Buscar si ya existe una cuenta con ese código
-                    AccountAccount = self.env['account.account']
-                    existing_account = AccountAccount.search([('code', '=', codigo_cuenta)], limit=1)
-
-                    if existing_account:
-                        print(
-                            f"[DEBUG] Cuenta contable ya existente: {existing_account.code} - {existing_account.name}")
-                        account_receivable_id = existing_account.id
-                    else:
-                        # Detectar versión de Odoo para usar los campos correctos
-                        has_account_type_field = 'account_type' in AccountAccount._fields
-
-                        # Crear valores de la cuenta según la versión de Odoo
-                        account_vals = {
-                            'code': codigo_cuenta,
-                            'name': f"Cuenta cliente {partner.name}",
-                            'reconcile': True,
-                            'account_type': 'asset_receivable'
-                        }
-
-                        if 'account.group' in self.env:
-                            AccountGroup = self.env['account.group']
-                            account_group = AccountGroup.search([('code_prefix_start', '=', cuenta_contable_norm)],
-                                                                limit=1)
-
-                            if not account_group:
-                                print(f"[INFO] Creando grupo de cuenta {cuenta_contable_norm}")
-                                try:
-                                    account_group = AccountGroup.create({
-                                        'name': f"Grupo {cuenta_contable_norm}",
-                                        'code_prefix_start': cuenta_contable_norm,
-                                    })
-                                except Exception as e:
-                                    print(f"[ERROR] No se pudo crear el grupo de cuenta: {str(e)}")
-
-                            if account_group:
-                                account_vals['group_id'] = account_group.id
-
-                        # Crear la cuenta
-                        try:
-                            new_account = AccountAccount.create(account_vals)
-                            print(f"[DEBUG] Cuenta contable creada: {new_account.code} - {new_account.name}")
-                            account_receivable_id = new_account.id
-
-                            # Asignar la cuenta contable al cliente
-                            partner.write({'property_account_receivable_id': account_receivable_id})
-                            print(f"[DEBUG] Cuenta contable asignada al cliente: {partner.name}")
-                        except Exception as e:
-                            print(f"[ERROR] No se pudo crear la cuenta contable: {str(e)}")
+                partner.write({'property_account_receivable_id': account_receivable_id})
+                print(f"[DEBUG] Cuenta contable asignada al cliente: {partner.name}")
+            # if cuenta_contable and subcuenta:
+            #     # Normalizar cuenta_contable a 4 dígitos y subcuenta a 9 dígitos
+            #     cuenta_contable_norm = str(cuenta_contable).strip()
+            #     subcuenta_norm = str(subcuenta).strip()
+            #
+            #     # Verificar que sean valores numéricos
+            #     if cuenta_contable_norm.isdigit() and subcuenta_norm.isdigit():
+            #         cuenta_contable_norm = cuenta_contable_norm[:4].zfill(4)
+            #         subcuenta_norm = subcuenta_norm[:9].zfill(9)
+            #
+            #         # Código completo de la cuenta contable
+            #         codigo_cuenta = cuenta_contable_norm + subcuenta_norm
+            #
+            #         print(f"[DEBUG] Procesando cuenta contable: {codigo_cuenta} para cliente {partner.name}")
+            #
+            #         # Buscar si ya existe una cuenta con ese código
+            #         AccountAccount = self.env['account.account']
+            #         existing_account = AccountAccount.search([('code', '=', codigo_cuenta)], limit=1)
+            #
+            #         if existing_account:
+            #             print(
+            #                 f"[DEBUG] Cuenta contable ya existente: {existing_account.code} - {existing_account.name}")
+            #             account_receivable_id = existing_account.id
+            #         else:
+            #             # Detectar versión de Odoo para usar los campos correctos
+            #             has_account_type_field = 'account_type' in AccountAccount._fields
+            #
+            #             # Crear valores de la cuenta según la versión de Odoo
+            #             account_vals = {
+            #                 'code': codigo_cuenta,
+            #                 'name': f"Cuenta cliente {partner.name}",
+            #                 'reconcile': True,
+            #                 'account_type': 'asset_receivable'
+            #             }
+            #
+            #             if 'account.group' in self.env:
+            #                 AccountGroup = self.env['account.group']
+            #                 account_group = AccountGroup.search([('code_prefix_start', '=', cuenta_contable_norm)],
+            #                                                     limit=1)
+            #
+            #                 if not account_group:
+            #                     print(f"[INFO] Creando grupo de cuenta {cuenta_contable_norm}")
+            #                     try:
+            #                         account_group = AccountGroup.create({
+            #                             'name': f"Grupo {cuenta_contable_norm}",
+            #                             'code_prefix_start': cuenta_contable_norm,
+            #                         })
+            #                     except Exception as e:
+            #                         print(f"[ERROR] No se pudo crear el grupo de cuenta: {str(e)}")
+            #
+            #                 if account_group:
+            #                     account_vals['group_id'] = account_group.id
+            #
+            #             # Crear la cuenta
+            #             try:
+            #                 new_account = AccountAccount.create(account_vals)
+            #                 print(f"[DEBUG] Cuenta contable creada: {new_account.code} - {new_account.name}")
+            #                 account_receivable_id = new_account.id
+            #
+            #                 # Asignar la cuenta contable al cliente
+            #                 partner.write({'property_account_receivable_id': account_receivable_id})
+            #                 print(f"[DEBUG] Cuenta contable asignada al cliente: {partner.name}")
+            #             except Exception as e:
+            #                 print(f"[ERROR] No se pudo crear la cuenta contable: {str(e)}")
