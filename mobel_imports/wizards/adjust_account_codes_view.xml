@@ -1,0 +1,30 @@
+
+<odoo>
+    <record id="view_adjust_account_codes_wizard_form" model="ir.ui.view">
+        <field name="name">adjust.account.codes.wizard.form</field>
+        <field name="model">adjust.account.codes.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Adjust Account Codes">
+                <footer>
+                    <button name="action_adjust_codes"
+                            type="object"
+                            string="Adjust Codes"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_adjust_account_codes_wizard" model="ir.actions.act_window">
+        <field name="name">Adjust Account Codes</field>
+        <field name="res_model">adjust.account.codes.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_adjust_account_codes_wizard"
+              name="Adjust Account Codes"
+              parent="account.menu_finance_configuration"
+              action="action_adjust_account_codes_wizard"/>
+</odoo>

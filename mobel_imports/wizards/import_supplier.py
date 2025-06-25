@@ -331,6 +331,7 @@ class ImportSupplier(models.TransientModel):
                         print(
                             f"[DEBUG] Cuenta contable ya existente: {existing_account.code} - {existing_account.name}")
                         account_receivable_id = existing_account.id
+                        existing_account.write({'name': partner.name})
                         partner.write({'property_account_payable_id': account_receivable_id})
                     else:
                         # Detectar versión de Odoo para usar los campos correctos
@@ -339,7 +340,7 @@ class ImportSupplier(models.TransientModel):
                         # Crear valores de la cuenta según la versión de Odoo
                         account_vals = {
                             'code': codigo_cuenta,
-                            'name': f"Cuenta cliente {partner.name}",
+                            'name': f" {partner.name}",
                             'reconcile': True,
                             'account_type': 'asset_receivable'
                         }

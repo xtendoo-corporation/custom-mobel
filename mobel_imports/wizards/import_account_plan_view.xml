@@ -1,0 +1,30 @@
+<odoo>
+    <record id="view_import_account_plan_form" model="ir.ui.view">
+        <field name="name">import.account.plan.form</field>
+        <field name="model">import.account.plan</field>
+        <field name="arch" type="xml">
+            <form string="Importar Plan Contable">
+                <group>
+                    <field name="data_file" filename="filename"/>
+                    <field name="filename" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_import"
+                            type="object"
+                            string="Importar"
+                            class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_import_account_plan" model="ir.actions.act_window">
+        <field name="name">Importar Plan Contable</field>
+        <field name="res_model">import.account.plan</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+
+</odoo>

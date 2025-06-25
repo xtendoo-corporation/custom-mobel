@@ -19,4 +19,16 @@
               parent="menu_mobel_imports_root"
               action="action_import_supplier"
               sequence="20"/>
+
+    <menuitem id="menu_mobel_imports_accounting_root"
+              name="Importaciones"
+              parent="account.menu_finance"
+              sequence="100"/>
+
+    <!-- Submenú para importar plan contable -->
+    <menuitem id="menu_import_account_plan"
+              name="Importar Plan Contable"
+              parent="menu_mobel_imports_accounting_root"
+              action="action_import_account_plan"
+              sequence="10"/>
 </odoo>
