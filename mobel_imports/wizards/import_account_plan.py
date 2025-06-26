@@ -23,7 +23,8 @@ class ImportAccountPlan(models.TransientModel):
             cuenta = str(int(row[1])) if row[1] else ''
             subcuenta = str(int(row[2])) if row[2] else ''
             nombre = row[3].strip() if len(row) > 3 else ''
-
+            if not nombre:
+                continue
             # Cuenta a 4 dígitos (rellenar a la derecha)
             cuenta = cuenta.ljust(4, '0')
             # Subcuenta a 0 si no hay valor

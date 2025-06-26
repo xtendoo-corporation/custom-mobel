@@ -24,7 +24,7 @@
     </record>
 
     <menuitem id="menu_adjust_account_codes_wizard"
-              name="Adjust Account Codes"
+              name="Ajustar Códigos de Cuenta"
               parent="account.menu_finance_configuration"
               action="action_adjust_account_codes_wizard"/>
 </odoo>

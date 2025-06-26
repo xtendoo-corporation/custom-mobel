@@ -6,7 +6,6 @@
             <form string="Importar Plan Contable">
                 <group>
                     <field name="data_file" filename="filename"/>
-                    <field name="filename" readonly="1"/>
                 </group>
                 <footer>
                     <button name="action_import"
@@ -26,5 +25,15 @@
         <field name="target">new</field>
     </record>
 
+    <menuitem id="menu_mobel_imports_accounting_root"
+          name="Importaciones"
+          parent="accountant.menu_accounting"
+          sequence="100"/>
 
+    <!-- Submenú para importar plan contable -->
+    <menuitem id="menu_import_account_plan"
+              name="Importar Plan Contable"
+              parent="menu_mobel_imports_accounting_root"
+              action="action_import_account_plan"
+              sequence="10"/>
 </odoo>

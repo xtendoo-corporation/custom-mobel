@@ -6,7 +6,7 @@
     'author': 'Abraham (Xtendoo)',
     'website': 'https://www.xtendoo.es',
     'license': 'AGPL-3',
-    'depends': ['contacts', 'base'],
+    'depends': ['contacts', 'base', 'accountant'],
     'data': [
         'security/ir.model.access.csv',
         'wizards/import_customer_view.xml',
