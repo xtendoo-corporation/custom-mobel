@@ -1,0 +1,33 @@
+<odoo>
+    <record id="view_import_asset_form" model="ir.ui.view">
+        <field name="name">import.asset.form</field>
+        <field name="model">import.asset</field>
+        <field name="arch" type="xml">
+            <form string="Importar Inmovilizados">
+                <group>
+                    <field name="data_file" filename="filename"/>
+                </group>
+                <footer>
+                    <button name="action_import"
+                            type="object"
+                            string="Importar"
+                            class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_import_asset" model="ir.actions.act_window">
+        <field name="name">Importar Inmovilizados</field>
+        <field name="res_model">import.asset</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_import_asset"
+              name="Importar Inmovilizados"
+              parent="menu_mobel_imports_accounting_root"
+              action="action_import_asset"
+              sequence="30"/>
+</odoo>
